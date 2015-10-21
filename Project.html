@@ -74,11 +74,10 @@ if (window.hljs && document.readyState && document.readyState === "complete") {
 <h2>Goal</h2>
 <p>The goal is to find the best model that predicts the classes below based on the sensor data: A - exactly according to the specification B - throwing the elbows to the front C - lifting the dumbbell only halfway D - lowering the dumbbell only halfway E - throwing the hips to the front</p>
 </div>
-<div id="preprocessing" class="section level2">
-<h2>Preprocessing</h2>
-</div>
-<div id="feature-selection-and-partitioning-the-data-set" class="section level1">
-<h1>Feature Selection and Partitioning the data set</h1>
+<div id="preprocessing" class="section level1">
+<h1>Preprocessing</h1>
+<div id="feature-selection-and-partitioning-the-data-set" class="section level2">
+<h2>Feature Selection and Partitioning the data set</h2>
 <p>Now we must eliminate variables with all values NA, clean up of near zero covariances variables, eliminate nonsignificance variables and partition the data set into a training set and test set</p>
 <pre class="r"><code>library(caret)</code></pre>
 <pre><code>## Loading required package: lattice
@@ -107,12 +106,12 @@ pml_test&lt;-pml_test[,-c(1:6)]
 sub &lt;- createDataPartition(y=pml_train$classe, p=0.7, list=FALSE)
 train_set&lt;-pml_train[sub,]
 test_set&lt;-pml_train[-sub,]</code></pre>
-<div id="model-attempt-1" class="section level2">
-<h2>Model attempt 1</h2>
 </div>
 </div>
-<div id="decission-tree" class="section level1">
-<h1>Decission Tree</h1>
+<div id="model-attempt-1" class="section level1">
+<h1>Model attempt 1</h1>
+<div id="decission-tree" class="section level2">
+<h2>Decission Tree</h2>
 <p>We now implement a decission tree model:</p>
 <pre class="r"><code>#Decision Tree
 model_dec_tree&lt;-rpart(classe~.,data=train_set,method=&quot;class&quot;)
@@ -155,12 +154,12 @@ rpart.plot(model_dec_tree,main=&quot;Decision Tree&quot;,extra=102,under=T,facle
 <pre><code>## [1] 0.7362787</code></pre>
 <p>With an out-of-sample error of</p>
 <pre><code>## [1] 0.2637213</code></pre>
-<div id="model-attempt-2" class="section level2">
-<h2>Model attempt 2</h2>
 </div>
 </div>
-<div id="random-forest" class="section level1">
-<h1>Random Forest</h1>
+<div id="model-attempt-2" class="section level1">
+<h1>Model attempt 2</h1>
+<div id="random-forest" class="section level2">
+<h2>Random Forest</h2>
 <p>We now implement a random forest model:</p>
 <pre class="r"><code>#Random Forest
 model_rf&lt;-randomForest(classe~.,data=train_set,method=&quot;class&quot;)
@@ -201,14 +200,19 @@ confusionMatrix(predict_rf,test_set$classe) </code></pre>
 <pre><code>## [1] 0.9949023</code></pre>
 <p>With an out-of-sample error of:</p>
 <pre><code>## [1] 0.005097706</code></pre>
+</div>
+</div>
+<div id="result" class="section level1">
+<h1>Result</h1>
 <p>We choose random forest model with an accuracy of</p>
 <pre><code>##  Accuracy 
 ## 0.9949023</code></pre>
 <p>That’s bigger than decision tree accuracy:</p>
 <pre><code>##  Accuracy 
 ## 0.7362787</code></pre>
-<div id="submission" class="section level2">
-<h2>Submission</h2>
+</div>
+<div id="submission" class="section level1">
+<h1>Submission</h1>
 <pre class="r"><code>#Final predicitions
 bestfit&lt;-model_rf
 predictions&lt;-predict(bestfit,pml_test)
@@ -225,7 +229,6 @@ pml_write_files = function(x){
   }
 }
 pml_write_files(predictions)</code></pre>
-</div>
 </div>
 
 
