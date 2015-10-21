@@ -1,0 +1,137 @@
+---
+title: "Project Practical Machine Learning Course"
+author: "Albert Pararols"
+date: "Tuesday, October 13, 2015"
+output: html_document
+---
+
+##Background
+
+Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement - a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. In this project, your goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the website here: http://groupware.les.inf.puc-rio.br/har (see the section on the Weight Lifting Exercise Dataset). 
+
+
+
+##Data 
+
+
+The training data for this project are available here: 
+
+https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv
+
+The test data are available here: 
+
+https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv
+
+The data for this project come from this source: http://groupware.les.inf.puc-rio.br/har. If you use the document you create for this class for any purpose please cite them as they have been very generous in allowing their data to be used for this kind of assignment. 
+
+
+##Goal
+
+The goal is to find the best model that predicts the classes below based on the sensor data:
+A - exactly according to the specification
+B - throwing the elbows to the front 
+C - lifting the dumbbell only halfway 
+D - lowering the dumbbell only halfway
+E - throwing the hips to the front
+
+##Preprocessing
+#Feature Selection and Partitioning the data set
+Now we must eliminate variables with all values NA, clean up of near zero covariances variables, eliminate nonsignificance variables and partition the data set into a training set and test set
+
+
+```{r warning=FALSE}
+library(caret)
+library(randomForest)
+library(rpart)
+library(rpart.plot)
+set.seed(555)
+pml_train<-read.csv("pml-training.csv",na.strings=c("NA","#DIV/0!", ""))
+pml_test<-read.csv("pml-testing.csv",na.strings=c("NA","#DIV/0!", ""))
+# Delete columns with all missing values
+pml_train1<-pml_train[,colSums(is.na(pml_train)) == 0]
+pml_test<-pml_test[,colSums(is.na(pml_train)) == 0]
+##Removing near zero & zero Covariates
+nsv<-nearZeroVar(pml_train1,saveMetrics=TRUE)
+pml_train<-pml_train1[,!nsv$zeroVar]
+pml_train<-pml_train1[,!nsv$nzv]
+pml_test<-pml_test[,!nsv$zeroVar]
+pml_test<-pml_test[,!nsv$nzv]
+##Removing variables non significatives
+pml_train<-pml_train[,-c(1:6)]
+pml_test<-pml_test[,-c(1:6)]
+##Partition train in 2 subsets 70% training set and 30% testint set
+sub <- createDataPartition(y=pml_train$classe, p=0.7, list=FALSE)
+train_set<-pml_train[sub,]
+test_set<-pml_train[-sub,]
+```
+## Model attempt 1
+# Decission Tree
+We now implement a decission tree model:
+```{r warning=FALSE}
+#Decision Tree
+model_dec_tree<-rpart(classe~.,data=train_set,method="class")
+predict_dec_tree<-predict(model_dec_tree,test_set,type="class")
+rpart.plot(model_dec_tree,main="Decision Tree",extra=102,under=T,faclen=0)
+confusionMatrix(predict_dec_tree,test_set$classe) 
+```
+It results an accuracy for decission tree model of 
+```{r echo=FALSE} 
+cm<-confusionMatrix(predict_dec_tree,test_set$classe)
+unname(cm$overall['Accuracy'])
+```
+With an out-of-sample error of
+```{r echo=FALSE} 
+unname(1-cm$overall['Accuracy'])
+```
+
+## Model attempt 2
+# Random Forest
+We now implement a random forest model:
+
+```{r warning=FALSE}
+#Random Forest
+model_rf<-randomForest(classe~.,data=train_set,method="class")
+predict_rf<-predict(model_rf,test_set,type="class")
+confusionMatrix(predict_rf,test_set$classe) 
+```
+It results an accuracy for random forest model of:
+```{r echo=FALSE} 
+cm<-confusionMatrix(predict_rf,test_set$classe)
+unname(cm$overall['Accuracy'])
+```
+With an out-of-sample error of:
+```{r echo=FALSE} 
+unname(1-cm$overall['Accuracy'])
+```
+
+
+We choose random forest model with an accuracy of
+```{r echo=FALSE} 
+cm<-confusionMatrix(predict_rf,test_set$classe)
+cm$overall['Accuracy']
+```
+That's bigger than decision tree accuracy:
+```{r echo=FALSE} 
+cm<-confusionMatrix(predict_dec_tree,test_set$classe)
+cm$overall['Accuracy']
+```
+
+##Submission
+```{r warning=FALSE}
+#Final predicitions
+bestfit<-model_rf
+predictions<-predict(bestfit,pml_test)
+predictions
+
+#Create submission files
+pml_write_files = function(x){
+  n = length(x)
+  for(i in 1:n){
+    filename = paste0("problem_id_",i,".txt")
+    write.table(x[i],file=filename,quote=FALSE,row.names=FALSE,col.names=FALSE)
+  }
+}
+pml_write_files(predictions)
+```
+
+
